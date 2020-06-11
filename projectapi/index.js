@@ -99,7 +99,7 @@ app.post("/login", (req, res) => {
 //get all tutions 
 app.get('/dashboard', (req, res) => {
  
-    mysqlconn.query("SELECT * FROM tutions", (err, row, fields) => {
+    mysqlconn.query("SELECT * FROM tutions where request = true", (err, row, fields) => {
         if (!err) {
             res.send(row)
         } else {
@@ -121,7 +121,8 @@ if(errs){
         if(!err){
             
             res.send(row)
-            
+            console.log(row)
+            console.log("chl rha hai bhai")
         }else{
            
         }
@@ -149,7 +150,7 @@ app.post('/addbooking',verifyToken,(req,res)=>{
 
         }else{
             let emp = req.body
-                  mysqlconn.query(`INSERT INTO booking(user_id,tution_id) VALUES(?,?)`,[authData.user.id,emp.tution_id],(err,row,fields)=>{
+                  mysqlconn.query(`INSERT INTO booking(user_id,tution_id,request) VALUES(?,?,false)`,[authData.user.id,emp.tution_id],(err,row,fields)=>{
                 if(!err){
                     console.log(row)
                     
@@ -231,7 +232,8 @@ app.get('/booking',verifyToken,(req,res)=>{
 
             mysqlconn.query(`SELECT * FROM tutions,booking 
             Where user_id=11 
-            AND tutions.tution_id=booking.tution_id;
+            AND tutions.tution_id=booking.tution_id
+            AND booking.request = TRUE;
 
             `,[authData.user.id],(err,row,fields)=>{
                 if(!err){
@@ -341,3 +343,70 @@ app.get('/bookingshow/:id',(req,res)=>{
         }
     })
 })
+
+//shows all tutions for approval
+app.get('/tutionapproval',(req,res)=>{
+    mysqlconn.query(`SELECT * FROM tutions where request = false`,(err,row,fields)=>{
+        if(!err){
+            res.send(row)
+            console.log("chal rha hai tution approval")
+            console.log(row)
+        }else{
+            console.log(err)
+        }
+    })
+})
+
+
+//shows all tutions for approval
+app.put('/tutionapproved/:id',(req,res)=>{
+    mysqlconn.query(`update tutions set request = 1 where tution_id = ?`,[req.params.id],(err,row,fields)=>{
+        if(!err){
+            console.log("updated successfully")
+            
+        }else{
+            console.log(err)
+        }
+    })
+})
+
+//shows all bookings for approval
+app.get('/bookingapproval',(req,res)=>{
+    mysqlconn.query(`select * from booking where request = 0`,(err,row,fields)=>{
+        if(!err){
+            res.send(row)
+            console.log("it is working")
+        }else{
+            console.log(err)
+        }
+    })
+})
+
+//shows specific booking for approval
+app.get('/bookingapproval/:id',(req,res)=>{
+    mysqlconn.query(`select * from tutions,booking where booking_id = ? and tutions.tution_id = booking.tution_id`,[req.params.id],(err,row,fields)=>{
+        if(!err){
+            res.send(row)
+            console.log("it is working")
+            
+        }else{
+            console.log(err)
+        }
+    })
+})
+
+//shows booking for approval
+app.put('/bookingapprove/:id',(req,res)=>{
+    mysqlconn.query(`update booking set request = 1 where booking_id = ?`,[req.params.id],(err,row,fields)=>{
+        if(!err){
+            console.log("updated successfully")
+            
+        }else{
+            console.log(err)
+        }
+    })
+})
+
+
+
+
