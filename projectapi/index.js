@@ -408,5 +408,17 @@ app.put('/bookingapprove/:id',(req,res)=>{
 })
 
 
-
+app.post('/dashboardspecific', (req, res) => {
+ let emp=req.body
+ console.log(emp.area)
+    mysqlconn.query("SELECT * FROM tutions where request = true AND area LIKE ?", [emp.area] + "%" , (err, row, fields) => {
+        if (!err) {
+            console.log("hellosadsda")
+            console.log(emp.area)
+            
+        } else {
+            console.log(err)
+        }
+    })
+})
 
