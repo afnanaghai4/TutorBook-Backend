@@ -1,5 +1,5 @@
 # projectmern- BACKEND
 
 project members:
-afnan aghai 14797
-sadiq vayani 14827
+Afnan Aghai 14797
+Muhammad Sadiq Vayani 14827
