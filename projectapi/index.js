@@ -32,12 +32,28 @@ app.listen(port, () => { console.log(`express running at port ${port}`) });
 
 
 //puts data in the db
-app.post("/signup", (req, res) => {
+app.post("/signuptutor", (req, res) => {
     {
         let emp = req.body;
         console.log(req.body)
-        var sql = `INSERT INTO users(fullname,email,password,qualification,area,contact,role_id) VALUES(?,?,?,?,?,?,?)`
-        var val = [emp.fullname, emp.email, emp.password, emp.qualification, emp.area, emp.contact, emp.role_id]
+        var sql = `INSERT INTO users(fullname,email,password,qualification,area,contact,role_id) VALUES(?,?,?,?,?,?,1)`
+        var val = [emp.fullname, emp.email, emp.password, emp.qualification, emp.area, emp.contact]
+        mysqlconn.query(sql, val, (err, row, fields) => {
+            if (!err) {
+                console.log(row)
+            } else {
+                console.log(err)
+            }
+        })
+    }
+})
+
+app.post("/signupfinder", (req, res) => {
+    {
+        let emp = req.body;
+        console.log(req.body)
+        var sql = `INSERT INTO users(fullname,email,password,qualification,area,contact,role_id) VALUES(?,?,?,?,?,?,2)`
+        var val = [emp.fullname, emp.email, emp.password, emp.qualification, emp.area, emp.contact]
         mysqlconn.query(sql, val, (err, row, fields) => {
             if (!err) {
                 console.log(row)
@@ -74,7 +90,23 @@ app.post("/login", (req, res) => {
              )
 
 
-            }else if(row[0].role_id == 3){
+            }
+            else if(row[0].role_id == 2){
+                const user={
+                    id:row[0].user_id,
+                    name:row[0].fullname,
+                    email:row[0].email}
+   
+                   jwt.sign({user},'tutorkey',(err,token)=>
+                
+                   { var status1="finder";
+                    res.json({token,status1});
+   
+                }
+                )
+            }
+
+            else if(row[0].role_id == 3){
                 const user={
                     id:row[0].user_id,
                     name:row[0].fullname,
@@ -150,7 +182,7 @@ app.post('/addbooking',verifyToken,(req,res)=>{
 
         }else{
             let emp = req.body
-                  mysqlconn.query(`INSERT INTO booking(user_id,tution_id,request) VALUES(?,?,false)`,[authData.user.id,emp.tution_id],(err,row,fields)=>{
+                  mysqlconn.query(`INSERT INTO booking(user_id,tution_id,request,request1) VALUES(?,?,false,false)`,[authData.user.id,emp.tution_id],(err,row,fields)=>{
                 if(!err){
                     console.log(row)
                     
@@ -223,9 +255,10 @@ app.get('/tutiondetails/:id', (req, res) => {
 
 
 //show bookings of tutor
-app.get('/booking',verifyToken,(req,res)=>{
+app.get('/booking1',verifyToken,(req,res)=>{
     jwt.verify(req.token,'secretkey',(err,authData)=>{
         if(err){
+            console.log(err)
         }else{
 
             let emp = req.body
@@ -233,7 +266,8 @@ app.get('/booking',verifyToken,(req,res)=>{
             mysqlconn.query(`SELECT * FROM tutions,booking 
             Where user_id=11 
             AND tutions.tution_id=booking.tution_id
-            AND booking.request = TRUE;
+            AND booking.request = TRUE
+            AND booking.request1 = true
 
             `,[authData.user.id],(err,row,fields)=>{
                 if(!err){
@@ -248,6 +282,32 @@ app.get('/booking',verifyToken,(req,res)=>{
     })
 })
 
+app.get('/booking2',verifyToken,(req,res)=>{
+    jwt.verify(req.token,'secretkey',(err,authData)=>{
+        if(err){
+            console.log(err)
+        }else{
+
+            let emp = req.body
+
+            mysqlconn.query(`SELECT * FROM tutions,booking 
+            Where user_id=11 
+            AND tutions.tution_id=booking.tution_id
+            AND booking.request = true
+            AND booking.request1 = false
+
+            `,[authData.user.id],(err,row,fields)=>{
+                if(!err){
+                    res.send(row)
+                   
+                }else{
+                    console.log(err)
+                    
+                }
+            })
+        }
+    })
+})
 
 //get contact of the person finding the tution
 app.get('/contact/:id',(req,res)=>{
@@ -266,6 +326,7 @@ app.get('/contact/:id',(req,res)=>{
 
 
 
+                    /*             ADMIN SIDE API'S                */ 
 
 //display all users on adminpanel
 app.get('/adminusers',(req,res)=>{
@@ -421,4 +482,142 @@ app.post('/dashboardspecific', (req, res) => {
         }
     })
 })
+
+//get all tutors on tutorfinder dashboard
+app.get('/dashboard2', verifyToken,(req, res) => {
+    jwt.verify(req.token,'tutorkey',(err,authData)=>{
+        if(err){
+            console.log(err)
+        }
+        else{
+    mysqlconn.query("SELECT * FROM users where role_id =1", (err, row, fields) => {
+        if (!err) {
+            res.send(row)
+            console.log(row)
+        } else {
+            console.log(err)
+        }
+    }
+    )
+}
+    })
+})
+
+                                /*          TUTOR FINDER API'S          */ 
+
+
+//get details of a specific tution
+app.get('/tutordetails/:id', (req, res) => {
+    
+    mysqlconn.query("SELECT * FROM users where user_id = ? ",[req.params.id] ,(err, row, fields) => {
+        if (!err) {
+            console.log(req.params.id)
+            res.send(row)
+            console.log("chl rha hai")
+            console.log(row)
+        } else {
+            console.log(err)
+            console.log("nhi chl rha")
+        }
+    })
+})
+
+//display all finder's tutions
+app.get('/tutiondisplay1',verifyToken,(req, res)=>{
+    jwt.verify(req.token,'tutorkey',(err,authData)=>{
+        if(err){
+           
+        }else{
+            let emp = req.body
+                  mysqlconn.query("select * from tutions where finder=? and request=1",[authData.user.id],(err,row,fields)=>{
+                if(!err){
+                    res.send(row)
+                }else{
+                    console.log(err)
+                }
+            })
+        }
+    })
+})
+
+//display all finder's tutions
+app.get('/tutiondisplay2',verifyToken,(req, res)=>{
+    jwt.verify(req.token,'tutorkey',(err,authData)=>{
+        if(err){
+           
+        }else{
+            let emp = req.body
+                  mysqlconn.query("select * from tutions where finder=? and request=0",[authData.user.id],(err,row,fields)=>{
+                if(!err){
+                    res.send(row)
+                }else{
+                    console.log(err)
+                }
+            })
+        }
+    })
+})
+
+app.post("/tutionform",verifyToken,(req,res)=>{
+    jwt.verify(req.token,'tutorkey',(err,authData)=>{
+        if(err){
+            console.log(err)
+        }else{
+            let emp = req.body
+            mysqlconn.query(`insert into tutions(studentname,grade,fee,city,area,duration,finder,startingdate,request)
+            values(?,?,?,'karachi',?,?,?,?,false)`,
+            [emp.studentname,emp.grade,emp.fees,emp.area,emp.duration,authData.user.id,emp.startingdate],(err,row,fields)=>{
+                if(!err){
+                    console.log(row)
+                    console.log("tution posted")
+                }else{
+                    console.log(err)
+                }
+            })
+        }
+    })
+})
+
+//display tutor approvals for tutions
+app.get('/tutorapproval',verifyToken,(req, res)=>{
+    jwt.verify(req.token,'tutorkey',(err,authData)=>{
+        if(err){
+           
+        }else{
+            let emp = req.body
+                  mysqlconn.query(`select * from users,booking,tutions 
+                  where tutions.tution_id=booking.tution_id 
+                  and users.user_id = booking.user_id 
+                  and booking.request = true
+                  and booking.request1 = false
+                  and tutions.finder=?`,[authData.user.id],(err,row,fields)=>{
+                if(!err){
+                    res.send(row)
+                }else{
+                    console.log(err)
+                }
+            })
+        }
+    })
+})
+
+
+app.put('/approvebooking/:id',verifyToken,(req, res)=>{
+    jwt.verify(req.token,'tutorkey',(err,authData)=>{
+        if(err){
+           console.log(err)
+        }else{
+            let emp = req.body
+                  mysqlconn.query(`update booking set request1=true where booking_id=?`,[req.params.id],(err,row,fields)=>{
+                if(!err){
+                    console.log(row)
+                   
+                }else{
+                    console.log(err)
+                }
+            })
+        }
+    })
+})
+
 
